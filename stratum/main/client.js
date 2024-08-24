@@ -75,6 +75,15 @@ const Client = function (config, socket, id, authorizeFn) {
     return flags;
   };
 
+  this.handleSuggestDifficulty = function (message) {
+    _this.sendJson({
+      id: message.id,
+      result: [
+        ['mining.set_difficulty', _this.id]],
+      error: null
+    });
+  };
+
   // Validate Sent Messages
   this.validateMessages = function (message) {
     switch (message.method) {
@@ -95,6 +104,15 @@ const Client = function (config, socket, id, authorizeFn) {
     case 'mining.submit':
       _this.activity = Date.now();
       _this.handleSubmit(message);
+      break;
+
+    case 'mining.suggest_difficulty':
+      _this.sendJson({
+        id: message.id,
+        result: [],
+        error: [20, 'Not supported.', null]
+      });
+      //_this.handleSuggestDifficulty(message);
       break;
 
       // Unsupported Stratum Messages
