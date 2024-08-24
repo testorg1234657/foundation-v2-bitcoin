@@ -1,12 +1,12 @@
-const Algorithms = require("./algorithms");
-const Daemon = require("../../daemon/main/daemon");
-const Difficulty = require("./difficulty");
-const Manager = require("./manager");
-const Network = require("./network");
-const Text = require("../../locales/index");
-const events = require("events");
-const utils = require("./utils");
-const zmq = require("zeromq");
+const Algorithms = require('./algorithms');
+const Daemon = require('../../daemon/main/daemon');
+const Difficulty = require('./difficulty');
+const Manager = require('./manager');
+const Network = require('./network');
+const Text = require('../../locales/index');
+const events = require('events');
+const utils = require('./utils');
+const zmq = require('zeromq');
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -52,9 +52,9 @@ const Pool = function (config, configMain, callback) {
 
   // Emit Logging Events
   this.emitLog = function (level, limiting, text, separator) {
-    if (!limiting || !process.env.forkId || process.env.forkId === "0") {
-      _this.emit("pool.log", level, text, separator);
-      if (level === "error") _this.callback(text);
+    if (!limiting || !process.env.forkId || process.env.forkId === '0') {
+      _this.emit('pool.log', level, text, separator);
+      if (level === 'error') _this.callback(text);
     }
   };
 
@@ -78,7 +78,7 @@ const Pool = function (config, configMain, callback) {
           addrAuxiliary,
           (authAuxiliary) => {
             _this.emitLog(
-              "log",
+              'log',
               false,
               _this.text.stratumWorkersText1(addrPrimary, ip, port),
             );
@@ -98,7 +98,7 @@ const Pool = function (config, configMain, callback) {
   // Check Daemon for Valid Address
   this.checkWorker = function (daemon, address, callback) {
     daemon.sendCommands(
-      [["validateaddress", [address.split(".")[0]]]],
+      [['validateaddress', [address.split('.')[0]]]],
       false,
       (results) => {
         callback(
@@ -121,7 +121,7 @@ const Pool = function (config, configMain, callback) {
       if (authorized) callback(authorized);
       else {
         _this.emitLog(
-          "log",
+          'log',
           false,
           _this.text.stratumWorkersText2(address, ip, port),
         );
@@ -147,7 +147,7 @@ const Pool = function (config, configMain, callback) {
         if (authorized) callback(authorized);
         else {
           _this.emitLog(
-            "log",
+            'log',
             false,
             _this.text.stratumWorkersText2(address, ip, port),
           );
@@ -160,9 +160,9 @@ const Pool = function (config, configMain, callback) {
       });
     } else if (_this.auxiliary.enabled) {
       _this.emitLog(
-        "log",
+        'log',
         false,
-        _this.text.stratumWorkersText2("<unknown>", ip, port),
+        _this.text.stratumWorkersText2('<unknown>', ip, port),
       );
       callbackMain({ error: null, authorized: false, disconnect: false });
     } else {
@@ -172,7 +172,7 @@ const Pool = function (config, configMain, callback) {
 
   // Check if Submitted Block was Accepted
   this.checkAccepted = function (daemon, hash, callback) {
-    daemon.sendCommands([["getblock", [hash]]], false, (results) => {
+    daemon.sendCommands([['getblock', [hash]]], false, (results) => {
       const blocks = results.filter((result) => {
         return (
           result.response &&
@@ -182,7 +182,7 @@ const Pool = function (config, configMain, callback) {
       });
       const response = blocks.length >= 1 ? blocks[0].response.tx[0] : null;
       if (blocks.length < 1)
-        _this.emitLog("error", false, _this.text.stratumBlocksText1());
+        _this.emitLog('error', false, _this.text.stratumBlocksText1());
       callback(blocks.length >= 1, response);
     });
   };
@@ -202,14 +202,14 @@ const Pool = function (config, configMain, callback) {
 
   // Check Percentage of Blockchain Downloaded
   this.checkDownloaded = function (daemon) {
-    daemon.sendCommands([["getblockchaininfo", []]], false, (results) => {
+    daemon.sendCommands([['getblockchaininfo', []]], false, (results) => {
       const blocks = Math.max(
         0,
         results
           .flatMap((result) => result.response)
           .flatMap((response) => response.blocks),
       );
-      daemon.sendCommands([["getpeerinfo", []]], true, (result) => {
+      daemon.sendCommands([['getpeerinfo', []]], true, (result) => {
         const peers = result.response;
         const peersBlocks = peers.flatMap(
           (response) => response.startingheight,
@@ -219,7 +219,7 @@ const Pool = function (config, configMain, callback) {
         );
         const percent = ((blocks / totalBlocks) * 100).toFixed(2);
         _this.emitLog(
-          "warning",
+          'warning',
           true,
           _this.text.stratumDownloadedText1(percent, peers.length),
         );
@@ -229,7 +229,7 @@ const Pool = function (config, configMain, callback) {
 
   // Check Current Network Statistics
   this.checkNetwork = function (daemon, type, callback) {
-    daemon.sendCommands([["getmininginfo", []]], true, (result) => {
+    daemon.sendCommands([['getmininginfo', []]], true, (result) => {
       const response = result.response || {};
       callback({
         difficulty: response.difficulty || 0,
@@ -279,10 +279,10 @@ const Pool = function (config, configMain, callback) {
 
     if (block.previous !== block.category || sending)
       reward = block.reward - transactionFee;
-    if (block.category === "orphan" && block.previous === "pending") reward = 0;
+    if (block.category === 'orphan' && block.previous === 'pending') reward = 0;
     if (
-      block.category === "orphan" &&
-      ["immature", "generate"].includes(block.previous)
+      block.category === 'orphan' &&
+      ['immature', 'generate'].includes(block.previous)
     )
       reward *= -1;
 
@@ -329,10 +329,10 @@ const Pool = function (config, configMain, callback) {
 
     // Submit Valid Block Candidate
     _this.submitPrimary(shareData.hex, (error, response) => {
-      if (error) _this.emitLog("error", false, response);
+      if (error) _this.emitLog('error', false, response);
       else {
         _this.emitLog(
-          "special",
+          'special',
           false,
           _this.text.stratumBlocksText4(
             _this.config.primary.coin.name,
@@ -370,7 +370,7 @@ const Pool = function (config, configMain, callback) {
                 pollingFlag = false;
                 if (update)
                   _this.emitLog(
-                    "log",
+                    'log',
                     true,
                     _this.text.stratumPollingText1(
                       _this.config.primary.coin.name,
@@ -390,21 +390,21 @@ const Pool = function (config, configMain, callback) {
   // Setup Primary Block ZMQ
   this.handlePrimaryBlockZmq = function (callback) {
     // Build Initial Variables
-    const sock = zmq.socket("sub");
+    const sock = zmq.socket('sub');
     const zmqConfig = _this.config.primary.zmq;
 
     // Check if ZMQ Connection Can Be Made
     utils.checkConnection(zmqConfig.host, zmqConfig.port).then(
       () => {
         sock.connect(`tcp://${zmqConfig.host}:${zmqConfig.port}`);
-        sock.subscribe("hashblock");
+        sock.subscribe('hashblock');
 
         // Handle Block Notifications
-        sock.on("message", () => {
+        sock.on('message', () => {
           _this.handlePrimaryTemplate(false, true, (error, result, update) => {
             if (update)
               _this.emitLog(
-                "log",
+                'log',
                 true,
                 _this.text.stratumZmqText3(
                   _this.config.primary.coin.name,
@@ -417,7 +417,7 @@ const Pool = function (config, configMain, callback) {
         // Handle Reconnects as Necessary
         setInterval(() => {
           sock.connect(`tcp://${zmqConfig.host}:${zmqConfig.port}`);
-          sock.subscribe("hashblock");
+          sock.subscribe('hashblock');
         }, _this.config.settings.interval.blocks * 10);
 
         // Handle Callback
@@ -427,7 +427,7 @@ const Pool = function (config, configMain, callback) {
       },
       (error) => {
         _this.emitLog(
-          "error",
+          'error',
           false,
           _this.text.stratumZmqText1(JSON.stringify(error)),
         );
@@ -439,13 +439,13 @@ const Pool = function (config, configMain, callback) {
   // Check for New Primary Block Template
   this.checkPrimaryTemplate = function (auxUpdate, callback) {
     // Build Daemon Commands
-    const commands = [["getblockchaininfo", []]];
+    const commands = [['getblockchaininfo', []]];
 
     // Check Saved Blockchain Data
     _this.primary.daemon.sendCommands(commands, true, (result) => {
       if (result.error) {
         _this.emitLog(
-          "error",
+          'error',
           false,
           _this.text.stratumTemplateText1(
             result.instance.host,
@@ -475,11 +475,11 @@ const Pool = function (config, configMain, callback) {
   // Process Primary Block Template
   this.handlePrimaryTemplate = function (newBlock, newBroadcast, callback) {
     // Build Daemon Commands
-    const rules = ["segwit"];
-    const capabilities = ["coinbasetxn", "workid", "coinbase/append"];
+    const rules = ['segwit'];
+    const capabilities = ['coinbasetxn', 'workid', 'coinbase/append'];
     const commands = [
       [
-        "getblocktemplate",
+        'getblocktemplate',
         [
           {
             capabilities: capabilities,
@@ -493,7 +493,7 @@ const Pool = function (config, configMain, callback) {
     _this.primary.daemon.sendCommands(commands, true, (result) => {
       if (result.error) {
         _this.emitLog(
-          "error",
+          'error',
           false,
           _this.text.stratumTemplateText1(
             result.instance.host,
@@ -515,7 +515,7 @@ const Pool = function (config, configMain, callback) {
           callback(null, result.response, newBlockFound);
         } catch (e) {
           _this.emitLog(
-            "error",
+            'error',
             false,
             _this.text.stratumTemplateText2(JSON.stringify(e)),
           );
@@ -528,24 +528,24 @@ const Pool = function (config, configMain, callback) {
   // Submit Primary Block to Blockchain
   this.submitPrimary = function (hexData, callback) {
     // Build Daemon Commands
-    const commands = [["submitblock", [hexData]]];
+    const commands = [['submitblock', [hexData]]];
 
     // Submit Block to Daemon
     _this.primary.daemon.sendCommands(commands, false, (results) => {
       const rejected = results.filter(
-        (result) => result.response === "rejected",
+        (result) => result.response === 'rejected',
       );
       const accepted = results.filter(
-        (result) => !result.error && result.response !== "rejected",
+        (result) => !result.error && result.response !== 'rejected',
       );
       if (rejected.length >= 1) {
         callback(
-          "bad-primary-rejected",
+          'bad-primary-rejected',
           _this.text.stratumBlocksText3(rejected[0].instance.host),
         );
       } else if (accepted.length < 1) {
         callback(
-          "bad-primary-orphan",
+          'bad-primary-orphan',
           _this.text.stratumBlocksText2(
             results[0].instance.host,
             JSON.stringify(results[0].error),
@@ -560,7 +560,7 @@ const Pool = function (config, configMain, callback) {
   this.handlePrimaryRounds = function (blocks, callback) {
     // Get Hashes for Each Transaction
     const commands = blocks.map((block) => [
-      "gettransaction",
+      'gettransaction',
       [block.transaction],
     ]);
 
@@ -568,7 +568,7 @@ const Pool = function (config, configMain, callback) {
     _this.primary.daemon.sendCommands(commands, true, (result) => {
       if (result.error) {
         _this.emitLog(
-          "error",
+          'error',
           false,
           _this.text.stratumPaymentsText1(JSON.stringify(result.error)),
         );
@@ -585,15 +585,15 @@ const Pool = function (config, configMain, callback) {
         // Check Daemon Edge Cases
         if (tx.error && tx.error.code === -5) {
           _this.emitLog(
-            "warning",
+            'warning',
             false,
             _this.text.stratumPaymentsText2(block.transaction),
           );
-          block.category = "orphan";
+          block.category = 'orphan';
           return;
         } else if (tx.error || !tx.response) {
           _this.emitLog(
-            "error",
+            'error',
             false,
             _this.text.stratumPaymentsText3(block.transaction),
           );
@@ -603,18 +603,18 @@ const Pool = function (config, configMain, callback) {
           (tx.response.details && tx.response.details.length === 0)
         ) {
           _this.emitLog(
-            "warning",
+            'warning',
             false,
             _this.text.stratumPaymentsText4(block.transaction),
           );
-          block.category = "orphan";
+          block.category = 'orphan';
           return;
         }
 
         // Filter Transactions by Address
         const transactions = tx.response.details.filter((tx) => {
           let txAddress = tx.address;
-          if (txAddress.indexOf(":") > -1) txAddress = txAddress.split(":")[1];
+          if (txAddress.indexOf(':') > -1) txAddress = txAddress.split(':')[1];
           return txAddress === _this.config.primary.address;
         });
 
@@ -631,7 +631,7 @@ const Pool = function (config, configMain, callback) {
         // Update Block Details
         block.category = generationTx.category;
         block.confirmations = parseInt(tx.response.confirmations);
-        if (["immature", "generate"].includes(block.category)) {
+        if (['immature', 'generate'].includes(block.category)) {
           block.reward = utils.roundTo(parseFloat(generationTx.amount), 8);
         }
       });
@@ -647,51 +647,51 @@ const Pool = function (config, configMain, callback) {
     const updates = {};
     blocks.forEach((block, idx) => {
       const current = workers[idx] || [];
-      if (block.type !== "primary") return;
+      if (block.type !== 'primary') return;
 
       // Establish Separate Behavior
       let orphan, immature, generate;
       switch (block.category) {
-        // Orphan Behavior
-        case "orphan":
-          orphan = _this.handleValidation(block, current, sending);
-          Object.keys(orphan).forEach((address) => {
-            if (address in updates)
-              updates[address][block.previous] += orphan[address];
-            else {
-              updates[address] = { immature: 0, generate: 0 };
-              updates[address][block.previous] += orphan[address];
-            }
-          });
-          break;
+      // Orphan Behavior
+      case 'orphan':
+        orphan = _this.handleValidation(block, current, sending);
+        Object.keys(orphan).forEach((address) => {
+          if (address in updates)
+            updates[address][block.previous] += orphan[address];
+          else {
+            updates[address] = { immature: 0, generate: 0 };
+            updates[address][block.previous] += orphan[address];
+          }
+        });
+        break;
 
         // Immature Behavior
-        case "immature":
-          immature = _this.handleValidation(block, current, sending);
-          Object.keys(immature).forEach((address) => {
-            if (address in updates)
-              updates[address].immature += immature[address];
-            else
-              updates[address] = { immature: immature[address], generate: 0 };
-          });
-          break;
+      case 'immature':
+        immature = _this.handleValidation(block, current, sending);
+        Object.keys(immature).forEach((address) => {
+          if (address in updates)
+            updates[address].immature += immature[address];
+          else
+            updates[address] = { immature: immature[address], generate: 0 };
+        });
+        break;
 
         // Generate Behavior
-        case "generate":
-          generate = _this.handleValidation(block, current, sending);
-          Object.keys(generate).forEach((address) => {
-            if (address in updates)
-              updates[address].generate += generate[address];
-            else
-              updates[address] = { immature: 0, generate: generate[address] };
-            if (block.previous === "immature")
-              updates[address].immature -= generate[address];
-          });
-          break;
+      case 'generate':
+        generate = _this.handleValidation(block, current, sending);
+        Object.keys(generate).forEach((address) => {
+          if (address in updates)
+            updates[address].generate += generate[address];
+          else
+            updates[address] = { immature: 0, generate: generate[address] };
+          if (block.previous === 'immature')
+            updates[address].immature -= generate[address];
+        });
+        break;
 
         // Default Behavior
-        default:
-          break;
+      default:
+        break;
       }
     });
 
@@ -712,14 +712,14 @@ const Pool = function (config, configMain, callback) {
     const minConfirmations = _this.config.primary.payments
       ? _this.config.primary.payments.minConfirmations
       : 0;
-    const commands = [["listunspent", [minConfirmations, 99999999]]];
+    const commands = [['listunspent', [minConfirmations, 99999999]]];
 
     // Get Current Balance of Daemon
     if (_this.primary.payments.enabled) {
       _this.primary.payments.daemon.sendCommands(commands, true, (result) => {
         if (result.error) {
           _this.emitLog(
-            "error",
+            'error',
             false,
             _this.text.stratumPaymentsText5(JSON.stringify(result.error)),
           );
@@ -740,11 +740,11 @@ const Pool = function (config, configMain, callback) {
         // Check if Balance >= Amounts
         if (balance < total) {
           _this.emitLog(
-            "error",
+            'error',
             false,
             _this.text.stratumPaymentsText6(balance, total),
           );
-          callback("bad-insufficient-funds", null);
+          callback('bad-insufficient-funds', null);
         } else callback(null, balance);
       });
     } else callback(null, 0);
@@ -772,14 +772,14 @@ const Pool = function (config, configMain, callback) {
 
     // Build Daemon Commands
     const total = Object.values(amounts).reduce((sum, cur) => sum + cur, 0);
-    const commands = [["sendmany", ["", amounts]]];
+    const commands = [['sendmany', ['', amounts]]];
 
     // Send Primary Payments using Sendmany
     if (_this.primary.payments.enabled && total > 0) {
       _this.primary.payments.daemon.sendCommands(commands, true, (result) => {
         if (result.error) {
           _this.emitLog(
-            "error",
+            'error',
             false,
             _this.text.stratumPaymentsText7(JSON.stringify(result.error)),
           );
@@ -792,7 +792,7 @@ const Pool = function (config, configMain, callback) {
           const count = Object.keys(amounts).length;
           const symbol = _this.config.primary.coin.symbol;
           _this.emitLog(
-            "special",
+            'special',
             false,
             _this.text.stratumPaymentsText8(
               total,
@@ -803,8 +803,8 @@ const Pool = function (config, configMain, callback) {
           );
           callback(null, amounts, balances, result.response);
         } else {
-          _this.emitLog("error", false, _this.text.stratumPaymentsText9());
-          callback("bad-transaction-undefined", {}, {}, null);
+          _this.emitLog('error', false, _this.text.stratumPaymentsText9());
+          callback('bad-transaction-undefined', {}, {}, null);
         }
       });
     } else callback(null, amounts, balances, null);
@@ -819,12 +819,12 @@ const Pool = function (config, configMain, callback) {
     }
 
     // Submit Valid Block Candidate
-    const hexData = Buffer.from(shareData.hex, "hex").slice(0, 80);
+    const hexData = Buffer.from(shareData.hex, 'hex').slice(0, 80);
     _this.submitAuxiliary(shareData, hexData, (error, response) => {
-      if (error) _this.emitLog("error", false, response);
+      if (error) _this.emitLog('error', false, response);
       else {
         _this.emitLog(
-          "special",
+          'special',
           false,
           _this.text.stratumBlocksText7(
             _this.config.auxiliary.coin.name,
@@ -859,7 +859,7 @@ const Pool = function (config, configMain, callback) {
               _this.checkPrimaryTemplate(auxUpdate, (error, update) => {
                 if (auxUpdate)
                   _this.emitLog(
-                    "log",
+                    'log',
                     true,
                     _this.text.stratumPollingText2(
                       _this.config.auxiliary.coin.name,
@@ -874,7 +874,7 @@ const Pool = function (config, configMain, callback) {
                       pollingFlag = false;
                       if (update)
                         _this.emitLog(
-                          "log",
+                          'log',
                           true,
                           _this.text.stratumPollingText1(
                             _this.config.primary.coin.name,
@@ -897,21 +897,21 @@ const Pool = function (config, configMain, callback) {
   // Setup Auxiliary Block ZMQ
   this.handleAuxiliaryBlockZmq = function (callback) {
     // Build Initial Variables
-    const sock = zmq.socket("sub");
+    const sock = zmq.socket('sub');
     const zmqConfig = _this.config.auxiliary.zmq;
 
     // Check if ZMQ Connection Can Be Made
     utils.checkConnection(zmqConfig.host, zmqConfig.port).then(
       () => {
         sock.connect(`tcp://${zmqConfig.host}:${zmqConfig.port}`);
-        sock.subscribe("hashblock");
+        sock.subscribe('hashblock');
 
         // Handle Block Notifications
-        sock.on("message", () => {
+        sock.on('message', () => {
           _this.handleAuxiliaryTemplate((auxError, auxResult, auxUpdate) => {
             if (auxUpdate)
               _this.emitLog(
-                "log",
+                'log',
                 true,
                 _this.text.stratumZmqText4(
                   _this.config.auxiliary.coin.name,
@@ -924,7 +924,7 @@ const Pool = function (config, configMain, callback) {
               (error, result, update) => {
                 if (update)
                   _this.emitLog(
-                    "log",
+                    'log',
                     true,
                     _this.text.stratumZmqText3(
                       _this.config.primary.coin.name,
@@ -939,7 +939,7 @@ const Pool = function (config, configMain, callback) {
         // Handle Reconnects as Necessary
         setInterval(() => {
           sock.connect(`tcp://${zmqConfig.host}:${zmqConfig.port}`);
-          sock.subscribe("hashblock");
+          sock.subscribe('hashblock');
         }, _this.config.settings.interval.blocks * 10);
 
         // Handle Callback
@@ -949,7 +949,7 @@ const Pool = function (config, configMain, callback) {
       },
       (error) => {
         _this.emitLog(
-          "error",
+          'error',
           false,
           _this.text.stratumZmqText2(JSON.stringify(error)),
         );
@@ -961,14 +961,14 @@ const Pool = function (config, configMain, callback) {
   // Check for New Auxiliary Block Template
   this.checkAuxiliaryTemplate = function (callback) {
     // Build Daemon Commands
-    const commands = [["getblockchaininfo", []]];
+    const commands = [['getblockchaininfo', []]];
 
     // Check Saved Blockchain Data
     if (_this.auxiliary.enabled) {
       _this.auxiliary.daemon.sendCommands(commands, true, (result) => {
         if (result.error) {
           _this.emitLog(
-            "error",
+            'error',
             false,
             _this.text.stratumTemplateText2(
               result.instance.host,
@@ -1002,14 +1002,14 @@ const Pool = function (config, configMain, callback) {
   // Process Auxiliary Block Template
   this.handleAuxiliaryTemplate = function (callback) {
     // Build Daemon Commands
-    const commands = [["getauxblock", []]];
+    const commands = [['getauxblock', []]];
 
     // Handle Auxiliary Block Template Updates
     if (_this.auxiliary.enabled) {
       _this.auxiliary.daemon.sendCommands(commands, true, (result) => {
         if (result.error) {
           _this.emitLog(
-            "error",
+            'error',
             false,
             _this.text.stratumTemplateText2(
               result.instance.host,
@@ -1018,9 +1018,9 @@ const Pool = function (config, configMain, callback) {
           );
           callback(result.error);
         } else {
-          const hash = result.response.target || result.response._target || "";
+          const hash = result.response.target || result.response._target || '';
           const target = utils.uint256BufferFromHash(hash, {
-            endian: "little",
+            endian: 'little',
             size: 32,
           });
           const update =
@@ -1058,25 +1058,25 @@ const Pool = function (config, configMain, callback) {
       hexData,
     ]);
     const commands = [
-      ["getauxblock", [_this.auxiliary.rpcData.hash, auxPow.toString("hex")]],
+      ['getauxblock', [_this.auxiliary.rpcData.hash, auxPow.toString('hex')]],
     ];
 
     // Submit Block to Daemon
     _this.auxiliary.daemon.sendCommands(commands, false, (results) => {
       const rejected = results.filter(
-        (result) => result.response === "rejected",
+        (result) => result.response === 'rejected',
       );
       const accepted = results.filter(
-        (result) => !result.error && result.response !== "rejected",
+        (result) => !result.error && result.response !== 'rejected',
       );
       if (rejected.length >= 1) {
         callback(
-          "bad-auxiliary-rejected",
+          'bad-auxiliary-rejected',
           _this.text.stratumBlocksText6(rejected[0].instance.host),
         );
       } else if (accepted.length < 1) {
         callback(
-          "bad-auxiliary-orphan",
+          'bad-auxiliary-orphan',
           _this.text.stratumBlocksText5(
             results[0].instance.host,
             JSON.stringify(results[0].error),
@@ -1091,7 +1091,7 @@ const Pool = function (config, configMain, callback) {
   this.handleAuxiliaryRounds = function (blocks, callback) {
     // Get Hashes for Each Transaction
     const commands = blocks.map((block) => [
-      "gettransaction",
+      'gettransaction',
       [block.transaction],
     ]);
 
@@ -1099,7 +1099,7 @@ const Pool = function (config, configMain, callback) {
     _this.auxiliary.daemon.sendCommands(commands, true, (result) => {
       if (result.error) {
         _this.emitLog(
-          "error",
+          'error',
           false,
           _this.text.stratumPaymentsText1(JSON.stringify(result.error)),
         );
@@ -1116,15 +1116,15 @@ const Pool = function (config, configMain, callback) {
         // Check Daemon Edge Cases
         if (tx.error && tx.error.code === -5) {
           _this.emitLog(
-            "warning",
+            'warning',
             false,
             _this.text.stratumPaymentsText2(block.transaction),
           );
-          block.category = "orphan";
+          block.category = 'orphan';
           return;
         } else if (tx.error || !tx.response) {
           _this.emitLog(
-            "error",
+            'error',
             false,
             _this.text.stratumPaymentsText3(block.transaction),
           );
@@ -1134,11 +1134,11 @@ const Pool = function (config, configMain, callback) {
           (tx.response.details && tx.response.details.length === 0)
         ) {
           _this.emitLog(
-            "warning",
+            'warning',
             false,
             _this.text.stratumPaymentsText4(block.transaction),
           );
-          block.category = "orphan";
+          block.category = 'orphan';
           return;
         }
 
@@ -1155,7 +1155,7 @@ const Pool = function (config, configMain, callback) {
         // Update Block Details
         block.category = generationTx.category;
         block.confirmations = parseInt(tx.response.confirmations);
-        if (["immature", "generate"].includes(block.category)) {
+        if (['immature', 'generate'].includes(block.category)) {
           block.reward = utils.roundTo(parseFloat(generationTx.amount), 8);
         }
       });
@@ -1171,51 +1171,51 @@ const Pool = function (config, configMain, callback) {
     const updates = {};
     blocks.forEach((block, idx) => {
       const current = workers[idx] || [];
-      if (block.type !== "auxiliary") return;
+      if (block.type !== 'auxiliary') return;
 
       // Establish Separate Behavior
       let orphan, immature, generate;
       switch (block.category) {
-        // Orphan Behavior
-        case "orphan":
-          orphan = _this.handleValidation(block, current, sending);
-          Object.keys(orphan).forEach((address) => {
-            if (address in updates)
-              updates[address][block.previous] += orphan[address];
-            else {
-              updates[address] = { immature: 0, generate: 0 };
-              updates[address][block.previous] += orphan[address];
-            }
-          });
-          break;
+      // Orphan Behavior
+      case 'orphan':
+        orphan = _this.handleValidation(block, current, sending);
+        Object.keys(orphan).forEach((address) => {
+          if (address in updates)
+            updates[address][block.previous] += orphan[address];
+          else {
+            updates[address] = { immature: 0, generate: 0 };
+            updates[address][block.previous] += orphan[address];
+          }
+        });
+        break;
 
         // Immature Behavior
-        case "immature":
-          immature = _this.handleValidation(block, current, sending);
-          Object.keys(immature).forEach((address) => {
-            if (address in updates)
-              updates[address].immature += immature[address];
-            else
-              updates[address] = { immature: immature[address], generate: 0 };
-          });
-          break;
+      case 'immature':
+        immature = _this.handleValidation(block, current, sending);
+        Object.keys(immature).forEach((address) => {
+          if (address in updates)
+            updates[address].immature += immature[address];
+          else
+            updates[address] = { immature: immature[address], generate: 0 };
+        });
+        break;
 
         // Generate Behavior
-        case "generate":
-          generate = _this.handleValidation(block, current, sending);
-          Object.keys(generate).forEach((address) => {
-            if (address in updates)
-              updates[address].generate += generate[address];
-            else
-              updates[address] = { immature: 0, generate: generate[address] };
-            if (block.previous === "immature")
-              updates[address].immature -= generate[address];
-          });
-          break;
+      case 'generate':
+        generate = _this.handleValidation(block, current, sending);
+        Object.keys(generate).forEach((address) => {
+          if (address in updates)
+            updates[address].generate += generate[address];
+          else
+            updates[address] = { immature: 0, generate: generate[address] };
+          if (block.previous === 'immature')
+            updates[address].immature -= generate[address];
+        });
+        break;
 
         // Default Behavior
-        default:
-          break;
+      default:
+        break;
       }
     });
 
@@ -1236,14 +1236,14 @@ const Pool = function (config, configMain, callback) {
     const minConfirmations = _this.config.auxiliary.payments
       ? _this.config.auxiliary.payments.minConfirmations
       : 0;
-    const commands = [["listunspent", [minConfirmations, 99999999]]];
+    const commands = [['listunspent', [minConfirmations, 99999999]]];
 
     // Get Current Balance of Daemon
     if (_this.auxiliary.payments.enabled) {
       _this.auxiliary.payments.daemon.sendCommands(commands, true, (result) => {
         if (result.error) {
           _this.emitLog(
-            "error",
+            'error',
             false,
             _this.text.stratumPaymentsText5(JSON.stringify(result.error)),
           );
@@ -1264,11 +1264,11 @@ const Pool = function (config, configMain, callback) {
         // Check if Balance >= Amounts
         if (balance < total) {
           _this.emitLog(
-            "error",
+            'error',
             false,
             _this.text.stratumPaymentsText6(balance, total),
           );
-          callback("bad-insufficient-funds", null);
+          callback('bad-insufficient-funds', null);
         } else callback(null, balance);
       });
     } else callback(null, 0);
@@ -1296,14 +1296,14 @@ const Pool = function (config, configMain, callback) {
 
     // Build Daemon Commands
     const total = Object.values(amounts).reduce((sum, cur) => sum + cur, 0);
-    const commands = [["sendmany", ["", amounts]]];
+    const commands = [['sendmany', ['', amounts]]];
 
     // Send Aauxiliary Payments using Sendmany
     if (_this.auxiliary.payments.enabled && total > 0) {
       _this.auxiliary.payments.daemon.sendCommands(commands, true, (result) => {
         if (result.error) {
           _this.emitLog(
-            "error",
+            'error',
             false,
             _this.text.stratumPaymentsText7(JSON.stringify(result.error)),
           );
@@ -1316,7 +1316,7 @@ const Pool = function (config, configMain, callback) {
           const count = Object.keys(amounts).length;
           const symbol = _this.config.auxiliary.coin.symbol;
           _this.emitLog(
-            "special",
+            'special',
             false,
             _this.text.stratumPaymentsText8(
               total,
@@ -1327,8 +1327,8 @@ const Pool = function (config, configMain, callback) {
           );
           callback(null, amounts, balances, result.response);
         } else {
-          _this.emitLog("error", false, _this.text.stratumPaymentsText9());
-          callback("bad-transaction-undefined", {}, {}, null);
+          _this.emitLog('error', false, _this.text.stratumPaymentsText9());
+          callback('bad-transaction-undefined', {}, {}, null);
         }
       });
     } else callback(null, amounts, balances, null);
@@ -1347,12 +1347,12 @@ const Pool = function (config, configMain, callback) {
         _this.checkAuxiliaryTemplate((auxError) => {
           if (!auxError) {
             _this.handleAuxiliaryTemplate((auxError, auxResult, auxUpdate) => {
-              console.log("auxUpdate 1", auxUpdate);
+              console.log('auxUpdate 1', auxUpdate);
               _this.checkPrimaryTemplate(auxUpdate, (error, update) => {
-                console.log("checkPrimaryTemplate", error, update);
+                console.log('checkPrimaryTemplate', error, update);
                 if (auxUpdate)
                   _this.emitLog(
-                    "log",
+                    'log',
                     true,
                     _this.text.stratumPollingText2(
                       _this.config.auxiliary.coin.name,
@@ -1364,11 +1364,11 @@ const Pool = function (config, configMain, callback) {
                     auxUpdate,
                     true,
                     (error, result, update) => {
-                      console.log("handlePrimaryTemplate");
+                      console.log('handlePrimaryTemplate');
                       pollingFlag = false;
                       if (update)
                         _this.emitLog(
-                          "log",
+                          'log',
                           true,
                           _this.text.stratumPollingText1(
                             _this.config.primary.coin.name,
@@ -1402,18 +1402,18 @@ const Pool = function (config, configMain, callback) {
 
     // Initialize Primary Daemons and Load Settings
     _this.primary.daemon.checkInstances((error) => {
-      if (error) _this.emitLog("error", false, _this.text.loaderDaemonsText1());
+      if (error) _this.emitLog('error', false, _this.text.loaderDaemonsText1());
       else if (_this.primary.payments.enabled) {
         _this.primary.payments.daemon.checkInstances((error) => {
           if (error)
-            _this.emitLog("error", false, _this.text.loaderDaemonsText2());
+            _this.emitLog('error', false, _this.text.loaderDaemonsText2());
           else {
-            _this.emitLog("debug", true, _this.text.checksMessageText1());
+            _this.emitLog('debug', true, _this.text.checksMessageText1());
             callback();
           }
         });
       } else {
-        _this.emitLog("debug", true, _this.text.checksMessageText1());
+        _this.emitLog('debug', true, _this.text.checksMessageText1());
         callback();
       }
     });
@@ -1437,18 +1437,18 @@ const Pool = function (config, configMain, callback) {
     if (_this.auxiliary.enabled) {
       _this.auxiliary.daemon.checkInstances((error) => {
         if (error)
-          _this.emitLog("error", false, _this.text.loaderDaemonsText3());
+          _this.emitLog('error', false, _this.text.loaderDaemonsText3());
         else if (_this.auxiliary.payments.enabled) {
           _this.auxiliary.payments.daemon.checkInstances((error) => {
             if (error)
-              _this.emitLog("error", false, _this.text.loaderDaemonsText4());
+              _this.emitLog('error', false, _this.text.loaderDaemonsText4());
             else {
-              _this.emitLog("debug", true, _this.text.checksMessageText2());
+              _this.emitLog('debug', true, _this.text.checksMessageText2());
               callback();
             }
           });
         } else {
-          _this.emitLog("debug", true, _this.text.checksMessageText2());
+          _this.emitLog('debug', true, _this.text.checksMessageText2());
           callback();
         }
       });
@@ -1464,7 +1464,7 @@ const Pool = function (config, configMain, callback) {
         _this.difficulty[port.port].removeAllListeners();
       _this.difficulty[port.port] = difficultyInstance;
       _this.difficulty[port.port].on(
-        "client.difficulty.new",
+        'client.difficulty.new',
         (client, newDiff) => {
           client.enqueueDifficulty(newDiff);
         },
@@ -1473,7 +1473,7 @@ const Pool = function (config, configMain, callback) {
       // Indicate Ports are Setup Successfully
       if (idx + 1 === _this.config.ports.length) {
         const ports = _this.config.ports.flatMap((port) => port.port);
-        _this.emitLog("debug", true, _this.text.checksMessageText3(ports));
+        _this.emitLog('debug', true, _this.text.checksMessageText3(ports));
       }
     });
   };
@@ -1482,10 +1482,10 @@ const Pool = function (config, configMain, callback) {
   this.setupSettings = function (callback) {
     // Build Daemon Commands
     const commands = [
-      ["validateaddress", [_this.config.primary.address]],
-      ["getmininginfo", []],
-      ["getblockchaininfo", []],
-      ["getnetworkinfo", []],
+      ['validateaddress', [_this.config.primary.address]],
+      ['getmininginfo', []],
+      ['getblockchaininfo', []],
+      ['getnetworkinfo', []],
     ];
 
     // Build Statistics/Settings w/ Daemon Response
@@ -1493,7 +1493,7 @@ const Pool = function (config, configMain, callback) {
       // Daemon Returned an Error
       if (!Array.isArray(result) && result.error) {
         _this.emitLog(
-          "error",
+          'error',
           false,
           _this.text.stratumSettingsText1(JSON.stringify(result.error)),
         );
@@ -1507,7 +1507,7 @@ const Pool = function (config, configMain, callback) {
         resultData[request] = result[i].response || result[i].error;
         if (result[i].error || !result[i].response) {
           _this.emitLog(
-            "error",
+            'error',
             false,
             _this.text.stratumSettingsText2(
               request,
@@ -1520,24 +1520,24 @@ const Pool = function (config, configMain, callback) {
 
       // Check if Given Coin Address is Valid
       if (!resultData.validateaddress.isvalid) {
-        _this.emitLog("error", false, _this.text.stratumSettingsText3());
+        _this.emitLog('error', false, _this.text.stratumSettingsText3());
         return;
       }
 
       // Check Current PoW Difficulty
       let difficulty = resultData.getblockchaininfo.difficulty;
-      if (typeof difficulty == "object")
-        difficulty = difficulty["proof-of-work"];
+      if (typeof difficulty == 'object')
+        difficulty = difficulty['proof-of-work'];
 
       // Initialize Statistics/Settings
       _this.settings.testnet =
-        resultData.getblockchaininfo.chain === "test" ? true : false;
+        resultData.getblockchaininfo.chain === 'test' ? true : false;
       _this.statistics.connections = resultData.getnetworkinfo.connections;
       _this.statistics.difficulty = difficulty * Algorithms.sha256d.multiplier;
       _this.config.settings.testnet = _this.settings.testnet;
 
       // Handle Callback
-      _this.emitLog("debug", true, _this.text.checksMessageText4());
+      _this.emitLog('debug', true, _this.text.checksMessageText4());
       callback();
     });
   };
@@ -1546,7 +1546,7 @@ const Pool = function (config, configMain, callback) {
   this.setupRecipients = function () {
     // No Recipients Configured
     if (_this.config.primary.recipients.length === 0) {
-      _this.emitLog("warning", false, _this.text.stratumRecipientsText1());
+      _this.emitLog('warning', false, _this.text.stratumRecipientsText1());
     }
 
     // Calculate Sum of All Recipients
@@ -1558,7 +1558,7 @@ const Pool = function (config, configMain, callback) {
     // Indicate Recipients are Setup Successfully
     _this.statistics.feePercentage =
       Math.round(_this.statistics.feePercentage * 1000) / 1000;
-    _this.emitLog("debug", true, _this.text.checksMessageText5());
+    _this.emitLog('debug', true, _this.text.checksMessageText5());
   };
 
   // Setup Pool Job Manager
@@ -1567,8 +1567,8 @@ const Pool = function (config, configMain, callback) {
     _this.manager = new Manager(_this.config, _this.configMain);
 
     // Handle Shares on Submission
-    _this.manager.on("manager.share", (shareData, auxShareData, blockValid) => {
-      const shareValid = typeof shareData.error === "undefined";
+    _this.manager.on('manager.share', (shareData, auxShareData, blockValid) => {
+      const shareValid = typeof shareData.error === 'undefined';
       const auxBlockValid = _this.checkAuxiliary(shareData, auxShareData);
       if (_this.auxiliary.enabled && _this.auxiliary.rpcData && auxShareData) {
         auxShareData.height = _this.auxiliary.rpcData.height;
@@ -1577,31 +1577,31 @@ const Pool = function (config, configMain, callback) {
 
       // Process Share/Primary Submission
       _this.handlePrimary(shareData, blockValid, (accepted, outputData) => {
-        _this.emit("pool.share", outputData, shareValid, accepted);
+        _this.emit('pool.share', outputData, shareValid, accepted);
       });
 
       // Process Auxiliary Submission
       if (!shareData.error && auxBlockValid) {
         _this.handleAuxiliary(auxShareData, true, (accepted, outputData) => {
-          _this.emit("pool.share", outputData, shareValid, accepted);
+          _this.emit('pool.share', outputData, shareValid, accepted);
         });
       }
     });
 
     // Handle New Block Templates
-    _this.manager.on("manager.block.new", (template) => {
+    _this.manager.on('manager.block.new', (template) => {
       // Process Primary Network Data
-      _this.checkNetwork(_this.primary.daemon, "primary", (networkData) => {
-        _this.emit("pool.network", networkData);
+      _this.checkNetwork(_this.primary.daemon, 'primary', (networkData) => {
+        _this.emit('pool.network', networkData);
       });
 
       // Process Auxiliary Network Data
       if (_this.auxiliary.enabled) {
         _this.checkNetwork(
           _this.auxiliary.daemon,
-          "auxiliary",
+          'auxiliary',
           (auxNetworkData) => {
-            _this.emit("pool.network", auxNetworkData);
+            _this.emit('pool.network', auxNetworkData);
           },
         );
       }
@@ -1611,23 +1611,23 @@ const Pool = function (config, configMain, callback) {
     });
 
     // Handle Updated Block Templates
-    _this.manager.on("manager.block.updated", (template) => {
+    _this.manager.on('manager.block.updated', (template) => {
       // Broadcast New Mining Jobs to Clients
       if (_this.network) _this.network.broadcastMiningJobs(template, false);
     });
 
     // Indicate Manager is Setup Successfully
-    _this.emitLog("debug", true, _this.text.checksMessageText6());
+    _this.emitLog('debug', true, _this.text.checksMessageText6());
   };
 
   // Setup Primary Blockchain Connection
   this.setupPrimaryBlockchain = function (callback) {
     // Build Daemon Commands
-    const rules = ["segwit"];
-    const capabilities = ["coinbasetxn", "workid", "coinbase/append"];
+    const rules = ['segwit'];
+    const capabilities = ['coinbasetxn', 'workid', 'coinbase/append'];
     const commands = [
       [
-        "getblocktemplate",
+        'getblocktemplate',
         [
           {
             capabilities: capabilities,
@@ -1640,7 +1640,7 @@ const Pool = function (config, configMain, callback) {
     // Check if Blockchain is Fully Synced
     _this.primary.daemon.sendCommands(commands, false, (results) => {
       if (results.every((r) => !r.error || r.error.code !== -10)) {
-        _this.emitLog("debug", true, _this.text.checksMessageText7());
+        _this.emitLog('debug', true, _this.text.checksMessageText7());
         callback();
       } else {
         setTimeout(() => _this.setupPrimaryBlockchain(callback), 30000);
@@ -1652,13 +1652,13 @@ const Pool = function (config, configMain, callback) {
   // Setup Auxiliary Blockchain Connection
   this.setupAuxiliaryBlockchain = function (callback) {
     // Build Daemon Commands
-    const commands = [["getauxblock", []]];
+    const commands = [['getauxblock', []]];
 
     // Check if Blockchain is Fully Synced
     if (_this.auxiliary.enabled) {
       _this.auxiliary.daemon.sendCommands(commands, false, (results) => {
         if (results.every((r) => !r.error || r.error.code !== -10)) {
-          _this.emitLog("debug", true, _this.text.checksMessageText8());
+          _this.emitLog('debug', true, _this.text.checksMessageText8());
           callback();
         } else {
           setTimeout(() => _this.setupAuxiliaryBlockchain(callback), 30000);
@@ -1666,7 +1666,7 @@ const Pool = function (config, configMain, callback) {
         }
       });
     } else {
-      _this.emitLog("debug", true, _this.text.checksMessageText8());
+      _this.emitLog('debug', true, _this.text.checksMessageText8());
       callback();
     }
   };
@@ -1676,21 +1676,21 @@ const Pool = function (config, configMain, callback) {
     // Request Primary/Auxiliary Templates
     _this.handleAuxiliaryTemplate((error) => {
       if (error) {
-        _this.emitLog("error", false, _this.text.stratumFirstJobText1());
+        _this.emitLog('error', false, _this.text.stratumFirstJobText1());
       } else {
-        console.log("[HERE] set handlePrimaryTemplate");
+        console.log('[HERE] set handlePrimaryTemplate');
         _this.handlePrimaryTemplate(false, true, (error) => {
-          console.log("RESPONSE handlePrimaryTemplate", error);
+          console.log('RESPONSE handlePrimaryTemplate', error);
 
           if (error) {
-            _this.emitLog("error", false, _this.text.stratumFirstJobText1());
+            _this.emitLog('error', false, _this.text.stratumFirstJobText1());
           } else {
-            console.log("setting up...");
+            console.log('setting up...');
             _this.config.ports.forEach((port) => {
-              console.log("port", port.port, port.difficulty.initial);
+              console.log('port', port.port, port.difficulty.initial);
               if (_this.statistics.difficulty < port.difficulty.initial) {
                 _this.emitLog(
-                  "warning",
+                  'warning',
                   true,
                   _this.text.stratumFirstJobText2(
                     _this.statistics.difficulty,
@@ -1701,7 +1701,7 @@ const Pool = function (config, configMain, callback) {
               }
             });
           }
-          _this.emitLog("debug", true, _this.text.checksMessageText9());
+          _this.emitLog('debug', true, _this.text.checksMessageText9());
           callback();
         });
       }
@@ -1713,14 +1713,14 @@ const Pool = function (config, configMain, callback) {
     // Primary (No Auxiliary) ZMQ Subscription
     if (!_this.auxiliary.enabled && _this.primary.zmq.enabled) {
       _this.handlePrimaryBlockZmq(() => {
-        _this.emitLog("debug", true, _this.text.checksMessageText10());
+        _this.emitLog('debug', true, _this.text.checksMessageText10());
         callback();
       });
 
       // Primary (No Auxilairy) Block Polling
     } else if (!_this.auxiliary.enabled) {
       _this.handlePrimaryBlockPolling();
-      _this.emitLog("debug", true, _this.text.checksMessageText10());
+      _this.emitLog('debug', true, _this.text.checksMessageText10());
       callback();
 
       // Primary ZMQ Subscription, Auxiliary ZMQ Subscription
@@ -1731,7 +1731,7 @@ const Pool = function (config, configMain, callback) {
     ) {
       _this.handlePrimaryBlockZmq(() => {
         _this.handleAuxiliaryBlockZmq(() => {
-          _this.emitLog("debug", true, _this.text.checksMessageText10());
+          _this.emitLog('debug', true, _this.text.checksMessageText10());
           callback();
         });
       });
@@ -1744,7 +1744,7 @@ const Pool = function (config, configMain, callback) {
     ) {
       _this.handlePrimaryBlockPolling();
       _this.handleAuxiliaryBlockZmq(() => {
-        _this.emitLog("debug", true, _this.text.checksMessageText10());
+        _this.emitLog('debug', true, _this.text.checksMessageText10());
         callback();
       });
 
@@ -1756,14 +1756,14 @@ const Pool = function (config, configMain, callback) {
     ) {
       _this.handlePrimaryBlockZmq(() => {
         _this.handleAuxiliaryBlockPolling();
-        _this.emitLog("debug", true, _this.text.checksMessageText10());
+        _this.emitLog('debug', true, _this.text.checksMessageText10());
         callback();
       });
 
       // Primary Block Polling, Auxiliary Block Polling
     } else {
       _this.handleCombinedBlockPolling();
-      _this.emitLog("debug", true, _this.text.checksMessageText10());
+      _this.emitLog('debug', true, _this.text.checksMessageText10());
       callback();
     }
   };
@@ -1771,45 +1771,45 @@ const Pool = function (config, configMain, callback) {
   // Setup Pool Clients
   this.setupClients = function (client) {
     // Setup VarDiff on New Client
-    if (typeof _this.difficulty[client.socket.localPort] !== "undefined") {
+    if (typeof _this.difficulty[client.socket.localPort] !== 'undefined') {
       _this.difficulty[client.socket.localPort].handleClient(client);
     }
 
     // Handle Client Difficulty Events
-    client.on("client.difficulty.queued", (diff) => {
+    client.on('client.difficulty.queued', (diff) => {
       _this.emitLog(
-        "log",
+        'log',
         false,
         _this.text.stratumClientText1(client.addrPrimary, diff),
       );
     });
-    client.on("client.difficulty.updated", (diff) => {
+    client.on('client.difficulty.updated', (diff) => {
       _this.difficulty[client.socket.localPort].clients[client.id] = [];
       _this.emitLog(
-        "log",
+        'log',
         false,
         _this.text.stratumClientText2(client.addrPrimary, diff),
       );
     });
 
     // Handle Client Socket Events
-    client.on("client.socket.malformed", (message) => {
+    client.on('client.socket.malformed', (message) => {
       _this.emitLog(
-        "warning",
+        'warning',
         false,
         _this.text.stratumClientText3(client.sendLabel(), message),
       );
     });
-    client.on("client.socket.flooded", () => {
+    client.on('client.socket.flooded', () => {
       _this.emitLog(
-        "warning",
+        'warning',
         false,
         _this.text.stratumClientText4(client.sendLabel()),
       );
     });
-    client.on("client.socket.error", (error) => {
+    client.on('client.socket.error', (error) => {
       _this.emitLog(
-        "warning",
+        'warning',
         false,
         _this.text.stratumClientText5(
           client.sendLabel(),
@@ -1817,9 +1817,9 @@ const Pool = function (config, configMain, callback) {
         ),
       );
     });
-    client.on("client.socket.timeout", (error) => {
+    client.on('client.socket.timeout', (error) => {
       _this.emitLog(
-        "warning",
+        'warning',
         false,
         _this.text.stratumClientText6(
           client.sendLabel(),
@@ -1827,55 +1827,55 @@ const Pool = function (config, configMain, callback) {
         ),
       );
     });
-    client.on("client.socket.disconnect", () => {
+    client.on('client.socket.disconnect', () => {
       _this.emitLog(
-        "warning",
+        'warning',
         false,
         _this.text.stratumClientText7(client.sendLabel()),
       );
     });
 
     // Handle Client Mining Events
-    client.on("client.mining.unknown", (message) => {
+    client.on('client.mining.unknown', (message) => {
       _this.emitLog(
-        "warning",
+        'warning',
         false,
         _this.text.stratumClientText11(client.sendLabel(), message.method),
       );
     });
 
     // Handle Client Banning Events
-    client.on("client.ban.kicked", (banTime) => {
+    client.on('client.ban.kicked', (banTime) => {
       _this.emitLog(
-        "warning",
+        'warning',
         false,
         _this.text.stratumClientText8(client.sendLabel(), banTime),
       );
     });
-    client.on("client.ban.forgave", () => {
+    client.on('client.ban.forgave', () => {
       _this.emitLog(
-        "log",
+        'log',
         false,
         _this.text.stratumClientText9(client.sendLabel()),
       );
     });
-    client.on("client.ban.trigger", () => {
+    client.on('client.ban.trigger', () => {
       _this.emitLog(
-        "warning",
+        'warning',
         false,
         _this.text.stratumClientText10(client.sendLabel()),
       );
     });
 
     // Handle Client Subscription Events
-    client.on("client.subscription", (params, callback) => {
+    client.on('client.subscription', (params, callback) => {
       const extraNonce = _this.manager.extraNonceCounter.next();
       callback(null, extraNonce, _this.manager.extraNonce2Size);
 
       // Send Correct Initial Difficulty to Miner
       const validPorts = _this.config.ports
         .filter((port) => port.port === client.socket.localPort)
-        .filter((port) => typeof port.difficulty.initial !== "undefined");
+        .filter((port) => typeof port.difficulty.initial !== 'undefined');
       if (validPorts.length >= 1)
         client.broadcastDifficulty(validPorts[0].difficulty.initial);
       else client.broadcastDifficulty(8);
@@ -1886,7 +1886,7 @@ const Pool = function (config, configMain, callback) {
     });
 
     // Handle Client Submission Events
-    client.on("client.submit", (message, callback) => {
+    client.on('client.submit', (message, callback) => {
       // Build Share Submission Data
       const submission = {
         extraNonce1: client.extraNonce1,
@@ -1916,20 +1916,20 @@ const Pool = function (config, configMain, callback) {
       _this.configMain,
       _this.authorizeWorker,
     );
-    _this.network.on("network.started", () => {
+    _this.network.on('network.started', () => {
       _this.statistics.ports = _this.config.ports
         .filter((port) => port.enabled)
         .flatMap((port) => port.port);
       _this.network.broadcastMiningJobs(_this.manager.currentJob, true);
-      _this.emitLog("debug", true, _this.text.checksMessageText11(), true);
+      _this.emitLog('debug', true, _this.text.checksMessageText11(), true);
       callback();
     });
 
     // Handle Periods Without Found Blocks/Shares
-    _this.network.on("network.timeout", () => {
+    _this.network.on('network.timeout', () => {
       _this.handlePrimaryTemplate(false, true, (error, rpcData, newBlock) => {
         _this.emitLog(
-          "debug",
+          'debug',
           true,
           _this.text.stratumNetworkText1(
             _this.config.settings.timeout.rebroadcast / 1000,
@@ -1941,9 +1941,9 @@ const Pool = function (config, configMain, callback) {
     });
 
     // Handle New Client Connections
-    _this.network.on("client.connected", (client) => {
+    _this.network.on('client.connected', (client) => {
       _this.setupClients(client);
-      _this.emit("client.socket.success");
+      _this.emit('client.socket.success');
     });
   };
 };
