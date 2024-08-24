@@ -353,6 +353,7 @@ const Pool = function (config, configMain, callback) {
           result.response.auxData = _this.auxiliary.rpcData;
         }
 
+        console.log('newBlockFound');
         const newBlockFound = _this.manager.handleTemplate(result.response, newBlock, newBroadcast);
         console.log('callback', callback);
 
@@ -1269,7 +1270,7 @@ const Pool = function (config, configMain, callback) {
         console.log('[HERE] set handlePrimaryTemplate');
         _this.handlePrimaryTemplate(false, true, (error) => {
           console.log('RESPONSE handlePrimaryTemplate', error);
-          
+
           if (error) {
             _this.emitLog('error', false, _this.text.stratumFirstJobText1());
           } else {

@@ -7,7 +7,7 @@ const utils = require('./utils');
 ////////////////////////////////////////////////////////////////////////////////
 
 // Main Manager Function
-const Manager = function(config, configMain) {
+const Manager = function (config, configMain) {
 
   const _this = this;
   this.config = config;
@@ -24,7 +24,7 @@ const Manager = function(config, configMain) {
   this.extraNonce2Size = _this.extraNoncePlaceholder.length - _this.extraNonceCounter.size;
 
   // Check if New Block is Processed
-  this.handleUpdates = function(rpcData) {
+  this.handleUpdates = function (rpcData) {
 
     // Build New Block Template
     const tmpTemplate = new Template(
@@ -41,12 +41,12 @@ const Manager = function(config, configMain) {
   };
 
   // Check if New Block is Processed
-  this.handleTemplate = function(rpcData, newBlock, newBroadcast) {
-
+  this.handleTemplate = function (rpcData, newBlock, newBroadcast) {
+    console.log('handleTemplate');
     // If Current Job !== Previous Job
     let isNewBlock = _this.currentJob === null;
     if (!isNewBlock && rpcData.height >= _this.currentJob.rpcData.height &&
-        ((_this.currentJob.rpcData.previousblockhash !== rpcData.previousblockhash) ||
+      ((_this.currentJob.rpcData.previousblockhash !== rpcData.previousblockhash) ||
         (_this.currentJob.rpcData.bits !== rpcData.bits))) {
       isNewBlock = true;
     }
@@ -54,6 +54,9 @@ const Manager = function(config, configMain) {
     // Build New Block Template
     if (!isNewBlock && !newBlock) return false;
     if (newBroadcast) _this.validJobs = {};
+
+    console.log('template');
+
     const tmpTemplate = new Template(
       _this.jobCounter.next(),
       _this.config,
@@ -68,7 +71,7 @@ const Manager = function(config, configMain) {
   };
 
   // Process Submitted Share
-  this.handleShare = function(jobId, client, submission) {
+  this.handleShare = function (jobId, client, submission) {
 
     // Main Submission Variables
     let difficulty = client.difficulty;
@@ -82,7 +85,7 @@ const Manager = function(config, configMain) {
     const blockDigest = Algorithms.sha256d.hash();
 
     // Share is Invalid
-    const shareError = function(error) {
+    const shareError = function (error) {
       _this.emit('manager.share', {
         job: jobId,
         id: client.id,
@@ -96,7 +99,7 @@ const Manager = function(config, configMain) {
         submitTime: submitTime,
         error: error[1],
       }, false);
-      return { error: error, response: null };
+      return {error: error, response: null};
     };
 
     // Edge Cases to Check if Share is Invalid
@@ -178,7 +181,7 @@ const Manager = function(config, configMain) {
       port: client.socket.localPort,
       addrPrimary: client.addrPrimary,
       addrAuxiliary: client.addrAuxiliary,
-      blockDiffPrimary : blockDiffAdjusted,
+      blockDiffPrimary: blockDiffAdjusted,
       blockType: blockValid ? 'primary' : 'share',
       coinbase: coinbaseBuffer,
       difficulty: difficulty,
@@ -200,7 +203,7 @@ const Manager = function(config, configMain) {
       port: client.socket.localPort,
       addrPrimary: client.addrPrimary,
       addrAuxiliary: client.addrAuxiliary,
-      blockDiffPrimary : blockDiffAdjusted,
+      blockDiffPrimary: blockDiffAdjusted,
       blockType: 'auxiliary',
       coinbase: coinbaseBuffer,
       difficulty: difficulty,
@@ -214,7 +217,7 @@ const Manager = function(config, configMain) {
     };
 
     _this.emit('manager.share', shareData, auxShareData, blockValid);
-    return { error: null, hash: blockHash, hex: blockHex, response: true };
+    return {error: null, hash: blockHash, hex: blockHex, response: true};
   };
 };
 
