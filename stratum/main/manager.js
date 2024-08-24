@@ -8,7 +8,6 @@ const utils = require('./utils');
 
 // Main Manager Function
 const Manager = function (config, configMain) {
-
   const _this = this;
   this.config = config;
   this.configMain = configMain;
@@ -21,17 +20,18 @@ const Manager = function (config, configMain) {
   // ExtraNonce Variables
   this.extraNonceCounter = utils.extraNonceCounter(4);
   this.extraNoncePlaceholder = Buffer.from('f000000ff111111f', 'hex');
-  this.extraNonce2Size = _this.extraNoncePlaceholder.length - _this.extraNonceCounter.size;
+  this.extraNonce2Size =
+    _this.extraNoncePlaceholder.length - _this.extraNonceCounter.size;
 
   // Check if New Block is Processed
   this.handleUpdates = function (rpcData) {
-
     // Build New Block Template
     const tmpTemplate = new Template(
       _this.jobCounter.next(),
       _this.config,
       Object.assign({}, rpcData),
-      _this.extraNoncePlaceholder);
+      _this.extraNoncePlaceholder,
+    );
 
     // Update Current Template
     _this.currentJob = tmpTemplate;
@@ -45,9 +45,13 @@ const Manager = function (config, configMain) {
     console.log('handleTemplate');
     // If Current Job !== Previous Job
     let isNewBlock = _this.currentJob === null;
-    if (!isNewBlock && rpcData.height >= _this.currentJob.rpcData.height &&
-      ((_this.currentJob.rpcData.previousblockhash !== rpcData.previousblockhash) ||
-        (_this.currentJob.rpcData.bits !== rpcData.bits))) {
+    if (
+      !isNewBlock &&
+      rpcData.height >= _this.currentJob.rpcData.height &&
+      (_this.currentJob.rpcData.previousblockhash !==
+        rpcData.previousblockhash ||
+        _this.currentJob.rpcData.bits !== rpcData.bits)
+    ) {
       isNewBlock = true;
     }
 
@@ -57,24 +61,31 @@ const Manager = function (config, configMain) {
 
     console.log('template');
 
-    const tmpTemplate = new Template(
-      _this.jobCounter.next(),
-      _this.config,
-      Object.assign({}, rpcData),
-      _this.extraNoncePlaceholder);
+    try {
+      const tmpTemplate = new Template(
+        _this.jobCounter.next(),
+        _this.config,
+        Object.assign({}, rpcData),
+        _this.extraNoncePlaceholder,
+      );
 
-    console.log('after', tmpTemplate);
+      console.log('after', tmpTemplate);
 
-    // Update Current Template
-    _this.currentJob = tmpTemplate;
-    _this.emit('manager.block.new', tmpTemplate);
-    _this.validJobs[tmpTemplate.jobId] = tmpTemplate;
-    return true;
+      // Update Current Template
+      _this.currentJob = tmpTemplate;
+      _this.emit('manager.block.new', tmpTemplate);
+      _this.validJobs[tmpTemplate.jobId] = tmpTemplate;
+
+      return true;
+    } catch (e) {
+      console.log('hm?', e);
+    }
+
+    return false;
   };
 
   // Process Submitted Share
   this.handleShare = function (jobId, client, submission) {
-
     // Main Submission Variables
     let difficulty = client.difficulty;
     const submitTime = Date.now();
@@ -88,20 +99,24 @@ const Manager = function (config, configMain) {
 
     // Share is Invalid
     const shareError = function (error) {
-      _this.emit('manager.share', {
-        job: jobId,
-        id: client.id,
-        ip: client.socket.remoteAddress,
-        port: client.socket.localPort,
-        addrPrimary: client.addrPrimary,
-        addrAuxiliary: client.addrAuxiliary,
-        blockType: 'share',
-        difficulty: difficulty,
-        identifier: _this.configMain.identifier || '',
-        submitTime: submitTime,
-        error: error[1],
-      }, false);
-      return {error: error, response: null};
+      _this.emit(
+        'manager.share',
+        {
+          job: jobId,
+          id: client.id,
+          ip: client.socket.remoteAddress,
+          port: client.socket.localPort,
+          addrPrimary: client.addrPrimary,
+          addrAuxiliary: client.addrAuxiliary,
+          blockType: 'share',
+          difficulty: difficulty,
+          identifier: _this.configMain.identifier || '',
+          submitTime: submitTime,
+          error: error[1],
+        },
+        false,
+      );
+      return { error: error, response: null };
     };
 
     // Edge Cases to Check if Share is Invalid
@@ -114,7 +129,10 @@ const Manager = function (config, configMain) {
     if (submission.nTime.length !== 8) {
       return shareError([20, 'incorrect size of ntime']);
     }
-    if (nTimeInt < job.rpcData.curtime || nTimeInt > (submitTime / 1000 | 0) + 7200) {
+    if (
+      nTimeInt < job.rpcData.curtime ||
+      nTimeInt > ((submitTime / 1000) | 0) + 7200
+    ) {
       return shareError([20, 'ntime out of range']);
     }
     if (submission.nonce.length !== 8) {
@@ -123,7 +141,14 @@ const Manager = function (config, configMain) {
     if (!client.addrPrimary) {
       return shareError([20, 'worker address isn\'t set properly']);
     }
-    if (!job.handleSubmissions([submission.extraNonce1, submission.extraNonce2, submission.nTime, submission.nonce])) {
+    if (
+      !job.handleSubmissions([
+        submission.extraNonce1,
+        submission.extraNonce2,
+        submission.nTime,
+        submission.nonce,
+      ])
+    ) {
       return shareError([22, 'duplicate share']);
     }
 
@@ -144,30 +169,46 @@ const Manager = function (config, configMain) {
     const extraNonce2Buffer = Buffer.from(submission.extraNonce2, 'hex');
 
     // Generate Coinbase Buffer
-    const coinbaseBuffer = job.handleCoinbase(extraNonce1Buffer, extraNonce2Buffer);
+    const coinbaseBuffer = job.handleCoinbase(
+      extraNonce1Buffer,
+      extraNonce2Buffer,
+    );
     const coinbaseHash = coinbaseDigest(coinbaseBuffer);
     const hashes = utils.convertHashToBuffer(job.rpcData.transactions);
     const transactions = [coinbaseHash].concat(hashes);
     const merkleRoot = fastRoot(transactions, utils.sha256d);
 
     // Start Generating Block Hash
-    const headerBuffer = job.handleHeader(version, merkleRoot, submission.nTime, submission.nonce);
+    const headerBuffer = job.handleHeader(
+      version,
+      merkleRoot,
+      submission.nTime,
+      submission.nonce,
+    );
     const headerHash = headerDigest(headerBuffer, nTimeInt);
     const headerBigInt = utils.bufferToBigInt(utils.reverseBuffer(headerHash));
 
     // Calculate Share Difficulty
     const shareMultiplier = Algorithms.sha256d.multiplier;
-    const shareDiff = Algorithms.sha256d.diff / Number(headerBigInt) * shareMultiplier;
+    const shareDiff =
+      (Algorithms.sha256d.diff / Number(headerBigInt)) * shareMultiplier;
     const blockDiffAdjusted = job.difficulty * Algorithms.sha256d.multiplier;
-    const blockHash = utils.reverseBuffer(blockDigest(headerBuffer, submission.nTime)).toString('hex');
-    const blockHex = job.handleBlocks(headerBuffer, coinbaseBuffer).toString('hex');
+    const blockHash = utils
+      .reverseBuffer(blockDigest(headerBuffer, submission.nTime))
+      .toString('hex');
+    const blockHex = job
+      .handleBlocks(headerBuffer, coinbaseBuffer)
+      .toString('hex');
 
     // Check if Share is Valid Block Candidate
     if (job.target >= headerBigInt) {
       blockValid = true;
     } else {
       if (shareDiff / difficulty < 0.99) {
-        if (client.previousDifficulty && shareDiff >= client.previousDifficulty) {
+        if (
+          client.previousDifficulty &&
+          shareDiff >= client.previousDifficulty
+        ) {
           difficulty = client.previousDifficulty;
         } else {
           return shareError([23, 'low difficulty share of ' + shareDiff]);
@@ -219,7 +260,7 @@ const Manager = function (config, configMain) {
     };
 
     _this.emit('manager.share', shareData, auxShareData, blockValid);
-    return {error: null, hash: blockHash, hex: blockHex, response: true};
+    return { error: null, hash: blockHash, hex: blockHex, response: true };
   };
 };
 
