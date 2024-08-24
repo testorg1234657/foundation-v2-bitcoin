@@ -15,6 +15,9 @@ config.settings = {};
 // Proxy Protocol Configuration
 config.settings.tcpProxyProtocol = false;
 
+// Coinbase Configuration
+config.settings.coinbaseString = "OP_NET";
+
 // Banning Configuration
 config.settings.banning = {};
 config.settings.banning.banLength = 600000; // ms;

@@ -3,7 +3,7 @@ const utils = require('./utils');
 ////////////////////////////////////////////////////////////////////////////////
 
 // Main Transactions Function
-const Transactions = function(config, rpcData) {
+const Transactions = function (config, rpcData) {
 
   const _this = this;
   this.config = config;
@@ -38,8 +38,7 @@ const Transactions = function(config, rpcData) {
   };
 
   // Calculate Generation Transaction
-  this.handleGeneration = function(placeholder) {
-
+  this.handleGeneration = function (placeholder) {
     const txLockTime = 0;
     const txInSequence = 0;
     const txInPrevOutHash = '';
@@ -90,7 +89,7 @@ const Transactions = function(config, rpcData) {
       utils.varIntBuffer(1),
       utils.uint256BufferFromHash(txInPrevOutHash),
       utils.packUInt32LE(txInPrevOutIndex),
-      utils.varIntBuffer(scriptSig.length + placeholder.length),
+      utils.varIntBuffer(scriptSig.length + placeholder.length + this.config.settings.coinbaseString.length),
       scriptSig,
     ]);
 
@@ -127,6 +126,7 @@ const Transactions = function(config, rpcData) {
 
     // Build Second Part of Generation Transaction
     const p2 = Buffer.concat([
+      Buffer.from(this.config.settings.coinbaseString, 'utf8'),
       utils.packUInt32LE(txInSequence),
       utils.varIntBuffer(txOutputBuffers.length),
       Buffer.concat(txOutputBuffers),
