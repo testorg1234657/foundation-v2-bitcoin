@@ -12,6 +12,9 @@ const config = {};
 config.enabled = true;
 config.settings = {};
 
+// Proxy Protocol Configuration
+config.settings.tcpProxyProtocol = false;
+
 // Banning Configuration
 config.settings.banning = {};
 config.settings.banning.banLength = 600000; // ms;

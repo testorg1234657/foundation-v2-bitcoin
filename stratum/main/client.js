@@ -3,8 +3,7 @@ const events = require('events');
 ////////////////////////////////////////////////////////////////////////////////
 
 // Main Client Function
-const Client = function(config, socket, id, authorizeFn) {
-
+const Client = function (config, socket, id, authorizeFn) {
   const _this = this;
   this.id = id;
   this.config = config;
@@ -16,14 +15,16 @@ const Client = function(config, socket, id, authorizeFn) {
   this.authorized = false;
   this.difficulty = 0;
   this.messages = '';
-  this.shares = { valid: 0, invalid: 0 };
+  this.shares = {valid: 0, invalid: 0};
+
+  this.remoteAddress = _this.socket.remoteAddress;
 
   // Difficulty Variables
   this.pendingDifficulty = null;
   this.staticDifficulty = false;
 
   // Send JSON Messages
-  this.sendJson = function() {
+  this.sendJson = function () {
     let response = '';
     Object.keys(arguments).forEach((arg) => {
       response += JSON.stringify(arguments[arg]) + '\n';
@@ -32,14 +33,14 @@ const Client = function(config, socket, id, authorizeFn) {
   };
 
   // Get Label of Stratum Client
-  this.sendLabel = function() {
+  this.sendLabel = function () {
     const worker = _this.addrPrimary || '(unauthorized)';
-    const address = _this.socket.remoteAddress;
-    return `${ worker } [${ address }]`;
+    const address = _this.socket.remoteAddress; //_this.socket.remoteAddress;
+    return `${worker} [${address}]`;
   };
 
   // Push Updated Difficulty to Queue
-  this.enqueueDifficulty = function(difficulty) {
+  this.enqueueDifficulty = function (difficulty) {
     if (!_this.staticDifficulty) {
       _this.pendingDifficulty = difficulty;
       _this.emit('client.difficulty.queued', difficulty);
@@ -47,7 +48,7 @@ const Client = function(config, socket, id, authorizeFn) {
   };
 
   // Validate Client Name
-  this.validateName = function(name) {
+  this.validateName = function (name) {
     if (name.length >= 1) {
       name = name.toString().replace(/[^a-zA-Z0-9.,_-]+/g, '');
     }
@@ -60,7 +61,7 @@ const Client = function(config, socket, id, authorizeFn) {
   };
 
   // Validate Client Password
-  this.validatePassword = function(password) {
+  this.validatePassword = function (password) {
     if (password.length >= 1) {
       password = password.toString().replace(/[^a-zA-Z0-9.,=]+/g, '');
     }
@@ -75,7 +76,7 @@ const Client = function(config, socket, id, authorizeFn) {
   };
 
   // Validate Sent Messages
-  this.validateMessages = function(message) {
+  this.validateMessages = function (message) {
     switch (message.method) {
 
     // Supported Stratum Messages
@@ -117,8 +118,18 @@ const Client = function(config, socket, id, authorizeFn) {
     }
   };
 
+  this.getData = function (message, d) {
+    try {
+      return JSON.parse(message);
+    } catch (e) {
+      if (_this.config.settings.tcpProxyProtocol !== true || d.indexOf('PROXY') !== 0) {
+        return false;
+      }
+    }
+  };
+
   // Validate Socket Data
-  this.validateData = function(data) {
+  this.validateData = function (data) {
 
     // Client is Flooding Server
     _this.messages += data;
@@ -135,11 +146,15 @@ const Client = function(config, socket, id, authorizeFn) {
       messages.forEach((message) => {
         if (message === '') return;
         try {
-          _this.validateMessages(JSON.parse(message));
-        } catch(e) {
+          const parsed = _this.getData(message, data);
+          if (parsed === false) {
+            throw new Error('Invalid JSON');
+          } else if (parsed != null) {
+            _this.validateMessages(parsed);
+          }
+        } catch (e) {
           _this.emit('client.socket.malformed', e);
           _this.socket.destroy();
-          return;
         }
       });
       _this.messages = incomplete;
@@ -147,7 +162,7 @@ const Client = function(config, socket, id, authorizeFn) {
   };
 
   // Check for Banning Users
-  this.considerBan = function(shareValid) {
+  this.considerBan = function (shareValid) {
 
     // Keep Track of Valid/Invalid Shares
     if (shareValid === true) _this.shares.valid += 1;
@@ -157,7 +172,7 @@ const Client = function(config, socket, id, authorizeFn) {
     const totalShares = _this.shares.valid + _this.shares.invalid;
     if (totalShares >= _this.config.settings.banning.checkThreshold) {
       if (((_this.shares.invalid / totalShares) * 100) < _this.config.settings.banning.invalidPercent) {
-        this.shares = { valid: 0, invalid: 0 };
+        this.shares = {valid: 0, invalid: 0};
       } else {
         _this.socket.destroy();
         _this.emit('client.ban.trigger');
@@ -170,7 +185,7 @@ const Client = function(config, socket, id, authorizeFn) {
   };
 
   // Broadcast Difficulty to Stratum Client
-  this.broadcastDifficulty = function(difficulty) {
+  this.broadcastDifficulty = function (difficulty) {
 
     // Handle Previous Difficulty
     if (difficulty === _this.difficulty) return false;
@@ -189,12 +204,12 @@ const Client = function(config, socket, id, authorizeFn) {
   };
 
   // Broadcast Mining Job to Stratum Client
-  this.broadcastMiningJob = function(parameters) {
+  this.broadcastMiningJob = function (parameters) {
 
     // Check Processed Shares
     const activityAgo = Date.now() - _this.activity;
     if (activityAgo > _this.config.settings.timeout.connection) {
-      const message = `The last submitted share was ${ activityAgo / 1000 | 0 } seconds ago`;
+      const message = `The last submitted share was ${activityAgo / 1000 | 0} seconds ago`;
       _this.emit('client.socket.timeout', message);
       _this.socket.destroy();
       return;
@@ -216,12 +231,12 @@ const Client = function(config, socket, id, authorizeFn) {
   };
 
   // Manage Stratum Subscription
-  this.handleSubscribe = function(message) {
+  this.handleSubscribe = function (message) {
 
     // Emit Subscription Event
     _this.emit('client.subscription', {}, (error, extraNonce1, extraNonce2Size) => {
       if (error) {
-        _this.sendJson({ id: message.id, result: null, error: error });
+        _this.sendJson({id: message.id, result: null, error: error});
         return;
       }
 
@@ -240,7 +255,7 @@ const Client = function(config, socket, id, authorizeFn) {
   };
 
   // Manage Stratum Authorization
-  this.handleAuthorize = function(message) {
+  this.handleAuthorize = function (message) {
 
     // Handle Client Authentication
     const clientAddrs = _this.validateName(message.params[0]);
@@ -259,7 +274,7 @@ const Client = function(config, socket, id, authorizeFn) {
 
     // Check to Authorize Client
     _this.authorizeFn(
-      _this.socket.remoteAddress,
+      _this.remoteAddress,
       _this.socket.localPort,
       _this.addrPrimary,
       _this.addrAuxiliary,
@@ -279,7 +294,7 @@ const Client = function(config, socket, id, authorizeFn) {
   };
 
   // Manage Stratum Configuration
-  this.handleConfigure = function(message) {
+  this.handleConfigure = function (message) {
 
     // Broadcast Version Updates
     _this.sendJson({
@@ -297,7 +312,7 @@ const Client = function(config, socket, id, authorizeFn) {
   };
 
   // Manage Stratum Multi-Versions
-  this.handleMultiVersion = function(message) {
+  this.handleMultiVersion = function (message) {
 
     // Parse Version of Coin
     const mVersion = parseInt(message.params[0]);
@@ -313,7 +328,7 @@ const Client = function(config, socket, id, authorizeFn) {
   };
 
   // Manage Stratum Submission
-  this.handleSubmit = function(message) {
+  this.handleSubmit = function (message) {
 
     // Check that Address is Set
     if (!_this.addrPrimary) {
@@ -358,11 +373,23 @@ const Client = function(config, socket, id, authorizeFn) {
   };
 
   // Establish Stratum Connection
-  this.setupClient = function() {
+  this.setupClient = function () {
 
     // Setup Main Socket Connection
     _this.socket.setEncoding('utf8');
-    _this.emit('client.ban.check');
+
+    if (_this.config.settings.tcpProxyProtocol === true) {
+      socket.once('data', (d) => {
+        if (d.indexOf('PROXY') === 0) {
+          _this.remoteAddress = d.split(' ')[2];
+        } else {
+          _this.emit('client.tcp.proxy.error', d);
+        }
+        _this.emit('client.ban.check');
+      });
+    } else {
+      _this.emit('client.ban.check');
+    }
 
     // Process Socket Events
     _this.socket.on('data', (data) => _this.validateData(data));

@@ -9,7 +9,7 @@ const uuid = require('uuid');
 ////////////////////////////////////////////////////////////////////////////////
 
 // Main Network Function
-const Network = function(config, configMain, authorizeFn) {
+const Network = function (config, configMain, authorizeFn) {
 
   const _this = this;
   this.config = config;
@@ -22,7 +22,7 @@ const Network = function(config, configMain, authorizeFn) {
   this.timeoutInterval = null;
 
   // Check Banned Clients for a Match
-  this.checkBan = function(client) {
+  this.checkBan = function (client) {
     if (client.socket.remoteAddress in _this.bannedIPs) {
 
       // Calculate Time Left on Ban
@@ -42,7 +42,7 @@ const Network = function(config, configMain, authorizeFn) {
   };
 
   // Handle Broadcasting New Jobs to Clients
-  this.broadcastMiningJobs = function(template, cleanJobs) {
+  this.broadcastMiningJobs = function (template, cleanJobs) {
 
     // Send New Jobs to Clients
     Object.keys(_this.clients).forEach((id) => {
@@ -68,6 +68,11 @@ const Network = function(config, configMain, authorizeFn) {
     _this.clients[subscriptionId] = client;
     _this.emit('client.connected', client);
 
+    client.on('client.tcp.proxy.error', () => {
+      client.socket.destroy();
+      _this.emit('client.disconnected', client);
+    });
+
     // Manage Client Behaviors
     client.on('client.ban.check', () => _this.checkBan(client));
     client.on('client.ban.trigger', () => {
@@ -85,8 +90,9 @@ const Network = function(config, configMain, authorizeFn) {
   };
 
   // Setup Stratum Network Functionality
-  this.setupNetwork = function() {
+  this.setupNetwork = undefined;
 
+  (function () {
     // Interval to Clear Old Bans from BannedIPs
     setInterval(() => {
       Object.keys(_this.bannedIPs).forEach((ip) => {
@@ -107,8 +113,8 @@ const Network = function(config, configMain, authorizeFn) {
 
       // Define Stratum Options
       const options = {
-        ...(port.tls && { key: fs.readFileSync(path.join('./certificates', _this.configMain.tls.key)) }),
-        ...(port.tls && { cert: fs.readFileSync(path.join('./certificates', _this.configMain.tls.cert)) }),
+        ...(port.tls && {key: fs.readFileSync(path.join('./certificates', _this.configMain.tls.key))}),
+        ...(port.tls && {cert: fs.readFileSync(path.join('./certificates', _this.configMain.tls.cert))}),
         allowHalfOpen: false,
       };
 
@@ -119,7 +125,7 @@ const Network = function(config, configMain, authorizeFn) {
       // Setup Server to Listen on Port
       server.listen(parseInt(currentPort), () => {
         serversStarted += 1;
-        if (serversStarted == stratumPorts.length) {
+        if (serversStarted === stratumPorts.length) {
           _this.emit('network.started');
         }
       });
@@ -127,10 +133,10 @@ const Network = function(config, configMain, authorizeFn) {
       // Add New Server to Tracked Server
       _this.servers[currentPort] = server;
     });
-  }();
+  }());
 
   // Stop Stratum Network Functionality
-  this.stopNetwork = function() {
+  this.stopNetwork = function () {
 
     // Filter Ports for Activity
     const stratumPorts = _this.config.ports.filter((port) => port.enabled);
