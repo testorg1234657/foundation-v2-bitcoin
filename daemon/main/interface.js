@@ -5,14 +5,14 @@ const async = require('async');
 ////////////////////////////////////////////////////////////////////////////////
 
 // Main Interface Function
-const Interface = function(daemons) {
+const Interface = function (daemons) {
 
   const _this = this;
   this.instances = daemons;
   this.instances.forEach((daemon, idx) => daemon.index = idx);
 
   // Check if All Daemons are Online
-  this.checkOnline = function(callback) {
+  this.checkOnline = function (callback) {
     _this.sendCommands([['getpeerinfo', []]], false, (results) => {
       _this.instances = _this.instances.filter((instance, idx) => !results[idx].error);
       callback(_this.instances.length);
@@ -20,7 +20,7 @@ const Interface = function(daemons) {
   };
 
   // Check if All Daemons are Initialized
-  this.checkInitialized = function() {
+  this.checkInitialized = function () {
     _this.checkOnline((active) => {
       if (active < 1) _this.emit('failed');
       else _this.emit('online');
@@ -28,12 +28,15 @@ const Interface = function(daemons) {
   };
 
   // Handle HTTP Response
-  this.handleResponse = function(response, instance, data, callback) {
+  this.handleResponse = function (response, instance, data, callback) {
 
     // Unauthorized Access
     if ([401, 403].includes(response.statusCode)) {
       callback({
-        error: { code: -1, message: 'Unauthorized RPC access. Invalid RPC username or password' },
+        error: {
+          code: -1,
+          message: 'Unauthorized RPC access. Invalid RPC username or password'
+        },
         response: null,
         instance: instance,
         data: data,
@@ -59,7 +62,7 @@ const Interface = function(daemons) {
         });
         callback(output);
 
-      // Single Command Passed
+        // Single Command Passed
       } else {
         callback({
           error: dataJson.error,
@@ -69,10 +72,14 @@ const Interface = function(daemons) {
         });
       }
 
-    // Data is Malformed
-    } catch(e) {
+      // Data is Malformed
+    } catch (e) {
+      console.log('Could not parse RPC data from daemon response', e);
       callback({
-        error: { code: -1, message: 'Could not parse RPC data from daemon response' },
+        error: {
+          code: -1,
+          message: 'Could not parse RPC data from daemon response'
+        },
         response: null,
         instance: instance,
         data: data,
@@ -81,7 +88,7 @@ const Interface = function(daemons) {
   };
 
   // Handle Sending HTTP Requests
-  this.handleRequest = function(instance, data, callback) {
+  this.handleRequest = function (instance, data, callback) {
 
     // HTTP Options
     let responded = false;
@@ -89,7 +96,7 @@ const Interface = function(daemons) {
       hostname: instance.host,
       port: instance.port,
       method: 'POST',
-      headers: { 'Content-Length': data.length },
+      headers: {'Content-Length': data.length},
       auth: instance.username + ':' + instance.password,
     };
 
@@ -119,7 +126,7 @@ const Interface = function(daemons) {
       if (!responded) {
         responded = true;
         callback({
-          error: { code: -1, message: e.message },
+          error: {code: -1, message: e.message},
           response: null,
           instance: instance,
           data: null,
@@ -132,12 +139,12 @@ const Interface = function(daemons) {
   };
 
   // Handle Sending RPC Commands
-  this.sendCommands = function(requests, streaming, callback) {
+  this.sendCommands = function (requests, streaming, callback) {
 
     // No Commands Passed
     if (requests.length < 1) {
       callback({
-        error: { code: -1, message: 'No commands passed to daemon' },
+        error: {code: -1, message: 'No commands passed to daemon'},
         response: null,
         instance: null,
         data: null,
@@ -175,7 +182,7 @@ const Interface = function(daemons) {
         eachCallback();
       });
 
-    // Handle Daemon Responses
+      // Handle Daemon Responses
     }, () => {
       if (streaming && !responded) callback(results[0]);
       else callback(results);
