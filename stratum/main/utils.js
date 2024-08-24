@@ -84,7 +84,7 @@ exports.decodeAddress = function (address, network) {
     }
     /* eslint-disable-next-line no-empty */
   } catch (e) {
-    //console.log('can not decode address (a)', e);
+    console.log('can not decode address (a)', e);
   }
 
   // Try to Decode Bech32 Address
@@ -100,7 +100,7 @@ exports.decodeAddress = function (address, network) {
     }
     /* eslint-disable-next-line no-empty */
   } catch (e) {
-    //console.log('can not decode address b', e);
+    console.log('can not decode address b', e);
   }
 
   // Invalid Address Specified
