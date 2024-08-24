@@ -122,6 +122,7 @@ const Client = function (config, socket, id, authorizeFn) {
     try {
       return JSON.parse(message);
     } catch (e) {
+      console.log(message, d, e, _this.config.settings.tcpProxyProtocol, d.indexOf('PROXY') !== 0);
       if (_this.config.settings.tcpProxyProtocol !== true || d.indexOf('PROXY') !== 0) {
         return false;
       }
@@ -149,7 +150,7 @@ const Client = function (config, socket, id, authorizeFn) {
           const parsed = _this.getData(message, data);
           if (parsed === false) {
             throw new Error('Invalid JSON');
-          } else if (parsed != null) {
+          } else if (parsed) {
             _this.validateMessages(parsed);
           }
         } catch (e) {
