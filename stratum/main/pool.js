@@ -353,10 +353,9 @@ const Pool = function (config, configMain, callback) {
           result.response.auxData = _this.auxiliary.rpcData;
         }
 
-        console.log('newBlock', newBlock);
         const newBlockFound = _this.manager.handleTemplate(result.response, newBlock, newBroadcast);
-        
-        console.log('newBlockFound', newBlockFound);
+        console.log('callback', callback);
+
         callback(null, result.response, newBlockFound);
       }
     });
@@ -981,7 +980,7 @@ const Pool = function (config, configMain, callback) {
         _this.checkAuxiliaryTemplate((auxError) => {
           if (!auxError) {
             _this.handleAuxiliaryTemplate((auxError, auxResult, auxUpdate) => {
-              console.log('auxUpdate', auxUpdate);
+              console.log('auxUpdate 1', auxUpdate);
               _this.checkPrimaryTemplate(auxUpdate, (error, update) => {
                 console.log('checkPrimaryTemplate', error, update);
                 if (auxUpdate) _this.emitLog('log', true, _this.text.stratumPollingText2(_this.config.auxiliary.coin.name, auxResult.height));
@@ -1262,17 +1261,15 @@ const Pool = function (config, configMain, callback) {
 
   // Setup First Job on Startup
   this.setupFirstJob = function (callback) {
-    console.log('setupFirstJob');
-
     // Request Primary/Auxiliary Templates
     _this.handleAuxiliaryTemplate((error) => {
-      console.log('handleAuxiliaryTemplate', error);
       if (error) {
         _this.emitLog('error', false, _this.text.stratumFirstJobText1());
       } else {
-        console.log('set handlePrimaryTemplate');
+        console.log('[HERE] set handlePrimaryTemplate');
         _this.handlePrimaryTemplate(false, true, (error) => {
-          console.log('handlePrimaryTemplate', error);
+          console.log('RESPONSE handlePrimaryTemplate', error);
+          
           if (error) {
             _this.emitLog('error', false, _this.text.stratumFirstJobText1());
           } else {
