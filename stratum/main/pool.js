@@ -957,10 +957,13 @@ const Pool = function(config, configMain, callback) {
         _this.checkAuxiliaryTemplate((auxError) => {
           if (!auxError) {
             _this.handleAuxiliaryTemplate((auxError, auxResult, auxUpdate) => {
+              console.log('auxUpdate', auxUpdate);
               _this.checkPrimaryTemplate(auxUpdate, (error, update) => {
+                console.log('checkPrimaryTemplate', error, update);
                 if (auxUpdate) _this.emitLog('log', true, _this.text.stratumPollingText2(_this.config.auxiliary.coin.name, auxResult.height));
                 if (!error && update) {
                   _this.handlePrimaryTemplate(auxUpdate, true, (error, result, update) => {
+                    console.log('handlePrimaryTemplate');
                     pollingFlag = false;
                     if (update) _this.emitLog('log', true, _this.text.stratumPollingText1(_this.config.primary.coin.name, result.height));
                   });
