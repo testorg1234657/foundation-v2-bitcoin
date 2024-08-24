@@ -63,6 +63,8 @@ const Manager = function (config, configMain) {
       Object.assign({}, rpcData),
       _this.extraNoncePlaceholder);
 
+    console.log('after', tmpTemplate);
+
     // Update Current Template
     _this.currentJob = tmpTemplate;
     _this.emit('manager.block.new', tmpTemplate);
