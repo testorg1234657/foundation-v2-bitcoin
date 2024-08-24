@@ -42,7 +42,6 @@ const Manager = function (config, configMain) {
 
   // Check if New Block is Processed
   this.handleTemplate = function (rpcData, newBlock, newBroadcast) {
-    console.log('handleTemplate');
     // If Current Job !== Previous Job
     let isNewBlock = _this.currentJob === null;
     if (
@@ -59,29 +58,19 @@ const Manager = function (config, configMain) {
     if (!isNewBlock && !newBlock) return false;
     if (newBroadcast) _this.validJobs = {};
 
-    console.log('template');
+    const tmpTemplate = new Template(
+      _this.jobCounter.next(),
+      _this.config,
+      Object.assign({}, rpcData),
+      _this.extraNoncePlaceholder,
+    );
 
-    try {
-      const tmpTemplate = new Template(
-        _this.jobCounter.next(),
-        _this.config,
-        Object.assign({}, rpcData),
-        _this.extraNoncePlaceholder,
-      );
+    // Update Current Template
+    _this.currentJob = tmpTemplate;
+    _this.emit('manager.block.new', tmpTemplate);
+    _this.validJobs[tmpTemplate.jobId] = tmpTemplate;
 
-      console.log('after', tmpTemplate);
-
-      // Update Current Template
-      _this.currentJob = tmpTemplate;
-      _this.emit('manager.block.new', tmpTemplate);
-      _this.validJobs[tmpTemplate.jobId] = tmpTemplate;
-
-      return true;
-    } catch (e) {
-      console.log('hm?', e);
-    }
-
-    return false;
+    return true;
   };
 
   // Process Submitted Share
