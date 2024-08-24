@@ -345,14 +345,18 @@ const Pool = function (config, configMain, callback) {
 
     // Handle Primary Block Template Updates
     _this.primary.daemon.sendCommands(commands, true, (result) => {
-      console.log(result);
-      
       if (result.error) {
         _this.emitLog('error', false, _this.text.stratumTemplateText1(result.instance.host, JSON.stringify(result.error)));
         callback(result.error);
       } else {
-        if (_this.auxiliary.enabled) result.response.auxData = _this.auxiliary.rpcData;
+        if (_this.auxiliary.enabled) {
+          result.response.auxData = _this.auxiliary.rpcData;
+        }
+
+        console.log('newBlock', newBlock);
         const newBlockFound = _this.manager.handleTemplate(result.response, newBlock, newBroadcast);
+        
+        console.log('newBlockFound', newBlockFound);
         callback(null, result.response, newBlockFound);
       }
     });
