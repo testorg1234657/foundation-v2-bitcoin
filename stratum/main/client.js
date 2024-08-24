@@ -122,7 +122,6 @@ const Client = function (config, socket, id, authorizeFn) {
     try {
       return JSON.parse(message);
     } catch (e) {
-      console.log('message', message, 'data', d, 'error', e, _this.config.settings, d.indexOf('PROXY') !== 0);
       if (_this.config.settings.tcpProxyProtocol !== true || d.indexOf('PROXY') !== 0) {
         return false;
       }
