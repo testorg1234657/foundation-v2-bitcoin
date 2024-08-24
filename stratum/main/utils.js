@@ -1,5 +1,5 @@
 const bchaddr = require('bchaddrjs');
-const bech32 = require('bech32');
+const { bech32 } = require('bech32');
 const bs58check = require('bs58check');
 const crypto = require('crypto');
 const merkleTree = require('merkle-lib');
