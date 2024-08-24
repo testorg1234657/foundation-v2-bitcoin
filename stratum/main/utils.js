@@ -63,11 +63,10 @@ exports.checkConnection = function (host, port, timeout) {
 
 // Convert Transaction Hashes to Buffers
 exports.convertHashToBuffer = function (txs) {
-  const txHashes = txs.map((tx) => {
+  return txs.map((tx) => {
     if (tx.txid !== undefined) return exports.uint256BufferFromHash(tx.txid);
     return exports.uint256BufferFromHash(tx.hash);
   });
-  return txHashes;
 };
 
 // Determine Type + Decode Any Address
@@ -84,7 +83,7 @@ exports.decodeAddress = function (address, network) {
     }
     /* eslint-disable-next-line no-empty */
   } catch (e) {
-    console.log('can not decode address (a)', e);
+    //console.log('can not decode address (a)', e);
   }
 
   // Try to Decode Bech32 Address
@@ -100,7 +99,7 @@ exports.decodeAddress = function (address, network) {
     }
     /* eslint-disable-next-line no-empty */
   } catch (e) {
-    console.log('can not decode address b', e);
+    //console.log('can not decode address b', e);
   }
 
   // Invalid Address Specified
@@ -345,10 +344,7 @@ exports.isHex = function (c) {
   if (b.length % 2) {
     b = '0' + b;
   }
-  if (b !== c) {
-    return false;
-  }
-  return true;
+  return b === c;
 };
 
 // Generate Unique Job for each Template
@@ -550,7 +546,7 @@ exports.sha256d = function (buffer) {
 // Generate Reverse Buffer from Input Hash
 exports.uint256BufferFromHash = function (hex) {
   let fromHex = Buffer.from(hex, 'hex');
-  if (fromHex.length != 32) {
+  if (fromHex.length !== 32) {
     const empty = Buffer.alloc(32);
     empty.fill(0);
     fromHex.copy(empty);
