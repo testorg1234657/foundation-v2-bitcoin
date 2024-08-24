@@ -74,7 +74,7 @@ const Interface = function (daemons) {
 
       // Data is Malformed
     } catch (e) {
-      console.log('Could not parse RPC data from daemon response', e);
+      console.log('Could not parse RPC data from daemon response', e, data);
       callback({
         error: {
           code: -1,
