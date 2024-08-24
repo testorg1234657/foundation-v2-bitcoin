@@ -345,6 +345,8 @@ const Pool = function (config, configMain, callback) {
 
     // Handle Primary Block Template Updates
     _this.primary.daemon.sendCommands(commands, true, (result) => {
+      console.log(result);
+      
       if (result.error) {
         _this.emitLog('error', false, _this.text.stratumTemplateText1(result.instance.host, JSON.stringify(result.error)));
         callback(result.error);
@@ -1264,6 +1266,7 @@ const Pool = function (config, configMain, callback) {
       if (error) {
         _this.emitLog('error', false, _this.text.stratumFirstJobText1());
       } else {
+        console.log('set handlePrimaryTemplate');
         _this.handlePrimaryTemplate(false, true, (error) => {
           console.log('handlePrimaryTemplate', error);
           if (error) {
