@@ -514,6 +514,8 @@ const Pool = function (config, configMain, callback) {
           );
           callback(null, result.response, newBlockFound);
         } catch (e) {
+          console.log(e);
+
           _this.emitLog(
             'error',
             false,
@@ -962,8 +964,6 @@ const Pool = function (config, configMain, callback) {
   this.checkAuxiliaryTemplate = function (callback) {
     // Build Daemon Commands
     const commands = [['getblockchaininfo', []]];
-
-    console.log(_this.auxiliary);
 
     // Check Saved Blockchain Data
     if (_this.auxiliary.enabled) {
