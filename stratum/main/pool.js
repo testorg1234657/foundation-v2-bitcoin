@@ -963,6 +963,8 @@ const Pool = function (config, configMain, callback) {
     // Build Daemon Commands
     const commands = [['getblockchaininfo', []]];
 
+    console.log(_this.auxiliary);
+
     // Check Saved Blockchain Data
     if (_this.auxiliary.enabled) {
       _this.auxiliary.daemon.sendCommands(commands, true, (result) => {
