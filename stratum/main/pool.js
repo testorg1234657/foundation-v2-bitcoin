@@ -517,7 +517,7 @@ const Pool = function (config, configMain, callback) {
           _this.emitLog(
             'error',
             false,
-            _this.text.stratumTemplateText2(JSON.stringify(e)),
+            _this.text.stratumTemplateText2(1, JSON.stringify(e)),
           );
           callback(e);
         }
@@ -972,7 +972,7 @@ const Pool = function (config, configMain, callback) {
             false,
             _this.text.stratumTemplateText2(
               result.instance.host,
-              JSON.stringify(result.error),
+              JSON.stringify(result),
             ),
           );
           callback(result.error);
@@ -1013,7 +1013,7 @@ const Pool = function (config, configMain, callback) {
             false,
             _this.text.stratumTemplateText2(
               result.instance.host,
-              JSON.stringify(result.error),
+              JSON.stringify(result),
             ),
           );
           callback(result.error);
